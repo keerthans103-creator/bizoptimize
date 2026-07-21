@@ -1,0 +1,29 @@
+.env
+.env.local
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+ml-service/chroma_db/
+ml-service/chroma_db_langchain/
+ml-service/models/model.pkl
+ml-service/models/model_metadata.json
+
+# Node
+node_modules/
+frontend/dist/
+
+# Java
+backend/target/
+*.class
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Claude Code local state
+.claude/

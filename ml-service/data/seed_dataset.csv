@@ -1,0 +1,71 @@
+task_text,category,label_score
+"Enter customer order details into the CRM every time a new order form is submitted.",data_entry,95
+"Copy data from incoming email attachments into a spreadsheet daily.",data_entry,90
+"Update inventory counts in the database whenever a shipment arrives.",data_entry,92
+"Merge daily CSV exports from three different tools into one master spreadsheet.",data_entry,88
+"Enter 50 new customer records into the database every Monday morning.",data_entry,93
+"Sync new leads from the web form into the CRM in real time.",data_entry,93
+"Transcribe handwritten order forms into the online ordering system each afternoon.",data_entry,80
+"Send a confirmation email automatically when a customer completes checkout.",customer_communication,97
+"Send a reminder email to customers whose invoice is 7 days overdue.",customer_communication,93
+"Send a welcome email with onboarding instructions to every new signup.",customer_communication,95
+"Send an email newsletter to the subscriber list once a week.",customer_communication,88
+"Reply to customers asking for a tracking number with their current shipment status.",customer_communication,85
+"Respond to common customer support questions using a set of template answers, escalating anything unusual.",customer_communication,55
+"Follow up with customers who abandoned their shopping cart, adjusting the message based on the product.",customer_communication,58
+"Monitor a shared inbox and forward emails to the right department based on keywords.",customer_communication,64
+"Persuade a hesitant client to sign a renewal contract during an in-person meeting.",customer_communication,9
+"Negotiate final pricing terms with a key enterprise client over a call.",customer_communication,8
+"Schedule a recurring calendar invite every Monday for the team standup.",scheduling,96
+"Schedule client meetings by checking calendar availability and proposing three time slots.",scheduling,66
+"Book a conference room automatically whenever a meeting is created in the calendar.",scheduling,91
+"Send a calendar reminder to attendees 24 hours before every scheduled meeting.",scheduling,94
+"Reschedule a meeting after negotiating a new time directly with a difficult client.",scheduling,20
+"Review and approve time-off requests based on team coverage rules.",scheduling,68
+"Generate an invoice automatically when a project is marked complete.",invoicing,90
+"Reconcile bank transactions against the accounting ledger every day.",invoicing,78
+"Convert uploaded PDF invoices into structured line items in the accounting system.",invoicing,85
+"Match incoming payments to open invoices in the accounting system, escalating unmatched ones.",invoicing,72
+"Calculate monthly payroll based on hours logged in the timesheet system.",invoicing,82
+"Approve routine expense reports under $100 based on standard policy.",invoicing,70
+"Review vendor invoices against purchase orders and flag mismatches for a human to resolve.",invoicing,68
+"Decide whether to write off a disputed invoice after speaking with the client.",invoicing,15
+"Generate a weekly sales report by pulling numbers from the database and formatting them into a template.",reporting,88
+"Pull daily website traffic numbers from analytics and paste them into a tracking sheet.",reporting,87
+"Run a nightly script that checks for duplicate entries in the customer database.",reporting,94
+"Write a short summary of customer feedback trends each month for the product team.",reporting,48
+"Summarize weekly team updates into a report, adding commentary on notable blockers.",reporting,45
+"Compile quarterly board deck slides and add strategic commentary on company direction.",reporting,12
+"Check server uptime status every hour and log the result.",reporting,96
+"Update the shared spreadsheet with new sales figures 3 times a day.",reporting,89
+"Review flagged transactions and mark them as approved or fraudulent based on a set of rules.",approvals,62
+"Screen incoming resumes for required keywords before passing them to a hiring manager.",approvals,60
+"Triage incoming support tickets into priority levels based on customer tier and issue type.",approvals,63
+"Categorize expense reports into budget categories and flag ones that need manager review.",approvals,65
+"Assign new support tickets to the right team member based on workload and expertise.",approvals,55
+"Auto-tag support tickets based on keywords in the subject line.",approvals,89
+"Archive completed support tickets older than 90 days.",approvals,91
+"Compare quotes from different vendors against a pricing rubric and recommend the cheapest compliant option.",approvals,60
+"Decide which of three competing vendor proposals best fits long-term company strategy.",approvals,12
+"Conduct a performance review and decide on a raise for a direct report.",hr,5
+"Interview a candidate for a senior engineering role and assess culture fit.",hr,10
+"Mediate a conflict between two team members about project ownership.",hr,4
+"Mentor a junior employee through a difficult client situation.",hr,7
+"Evaluate a sensitive HR complaint and determine appropriate next steps.",hr,5
+"Have a difficult conversation with an underperforming employee about their future at the company.",hr,4
+"Counsel an employee going through a personal hardship affecting their work.",hr,3
+"Decide how to restructure the team after a department reorg.",hr,6
+"Post the same social media update across Twitter, Facebook, and LinkedIn every morning.",sales_marketing,90
+"Draft social media captions based on a content calendar, then have a teammate approve the tone.",sales_marketing,50
+"Prepare a first draft of a contract from a template, filling in client-specific terms.",sales_marketing,52
+"Coach a sales rep on how to handle a difficult prospect.",sales_marketing,9
+"Design the overall visual identity and branding direction for a new product line.",sales_marketing,15
+"Craft the company's response strategy to a PR crisis.",sales_marketing,8
+"Judge the creative quality of submitted client pitch decks and choose the best one.",sales_marketing,18
+"Brainstorm a new product strategy for next year's roadmap with the leadership team.",strategy,6
+"Negotiate a multi-year lease renewal for the office space.",strategy,7
+"Decide on the final creative direction for the annual marketing campaign.",strategy,10
+"Back up the database every night at midnight.",it_ops,98
+"Restart a failed automated job and log the incident whenever the monitoring system alerts.",it_ops,86
+"Rotate API credentials on a fixed schedule every quarter.",it_ops,84
+"Investigate a novel production outage with no matching runbook and design a fix.",it_ops,14

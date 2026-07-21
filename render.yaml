@@ -1,0 +1,78 @@
+databases:
+  - name: bizoptimize-db
+    plan: free
+    databaseName: bizoptimize
+    user: bizoptimize
+
+services:
+  - type: web
+    name: bizoptimize-ml-service
+    runtime: docker
+    plan: free
+    dockerfilePath: ./ml-service/Dockerfile
+    dockerContext: ./ml-service
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-flash-lite-latest
+      - key: PORT
+        value: 5001
+
+  - type: web
+    name: bizoptimize-backend
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: bizoptimize-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: bizoptimize-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: bizoptimize-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: bizoptimize-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: bizoptimize-db
+          property: password
+      - key: JWT_SECRET
+        generateValue: true
+
+  - type: web
+    name: bizoptimize-gateway
+    runtime: docker
+    plan: free
+    dockerfilePath: ./gateway/Dockerfile
+    dockerContext: ./gateway
+    envVars:
+      - key: ML_SERVICE_URL
+        value: https://bizoptimize-ml-service.onrender.com
+      - key: BACKEND_URL
+        value: https://bizoptimize-backend.onrender.com
+      - key: PORT
+        value: 5000
+
+  - type: web
+    name: bizoptimize-frontend
+    runtime: static
+    plan: free
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
+    envVars:
+      - key: VITE_GATEWAY_URL
+        value: https://bizoptimize-gateway.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

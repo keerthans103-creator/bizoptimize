@@ -1,0 +1,191 @@
+[
+  {
+    "id": "data-entry-form-to-db",
+    "category": "data_entry",
+    "title": "Auto-import form submissions into a database",
+    "instructions": "Use a webhook from your form provider (Typeform, Google Forms, JotForm) to POST new submissions to a small Flask/Express endpoint. On receipt, validate required fields and INSERT into Postgres/MySQL via an ORM (SQLAlchemy, Prisma). Add a unique constraint on submission ID to make the insert idempotent so retried webhooks don't duplicate rows.",
+    "tags": ["webhook", "form", "database", "python", "javascript"]
+  },
+  {
+    "id": "data-entry-csv-merge",
+    "category": "data_entry",
+    "title": "Merge multiple CSV/Excel exports into one master sheet",
+    "instructions": "Use pandas: `pd.concat([pd.read_csv(f) for f in file_list])`, then `.drop_duplicates(subset=['id'])` and write out with `to_excel`/`to_csv`. Schedule with a cron job or `schedule` library to run nightly against a watched folder.",
+    "tags": ["pandas", "csv", "excel", "python", "batch"]
+  },
+  {
+    "id": "data-entry-pdf-extraction",
+    "category": "data_entry",
+    "title": "Extract line items from PDF invoices",
+    "instructions": "Use `pdfplumber` or AWS Textract to pull table data from incoming PDFs, normalize into a DataFrame, and insert into the accounting system's API. For inconsistent layouts, train a lightweight regex/heuristic parser per vendor template rather than one universal parser.",
+    "tags": ["pdf", "ocr", "invoicing", "python"]
+  },
+  {
+    "id": "data-entry-ocr-scan",
+    "category": "data_entry",
+    "title": "Digitize handwritten/scanned forms",
+    "instructions": "Run scans through Tesseract OCR or a cloud OCR API (Google Vision, AWS Textract), post-process with regex field extraction, then write validated rows to the target system via its REST API.",
+    "tags": ["ocr", "tesseract", "python"]
+  },
+  {
+    "id": "email-auto-confirmation",
+    "category": "customer_communication",
+    "title": "Send transactional confirmation emails automatically",
+    "instructions": "Hook into your checkout/order event (webhook or DB trigger) and call a transactional email API (SendGrid, Postmark, AWS SES) with a templated payload. Store send status in an events table for auditability.",
+    "tags": ["email", "sendgrid", "webhook", "transactional"]
+  },
+  {
+    "id": "email-overdue-reminders",
+    "category": "customer_communication",
+    "title": "Automated overdue invoice reminders",
+    "instructions": "Run a scheduled job (cron, Celery beat, or Zapier schedule trigger) that queries invoices where `due_date < now() - interval '7 days' AND status = 'unpaid'`, then sends a reminder email via your email API for each match, logging a `reminder_sent_at` timestamp to prevent duplicate sends.",
+    "tags": ["cron", "email", "invoicing", "sql"]
+  },
+  {
+    "id": "email-newsletter",
+    "category": "customer_communication",
+    "title": "Scheduled newsletter send to subscriber list",
+    "instructions": "Use an ESP (Mailchimp, SendGrid Marketing Campaigns) API or a scheduled script pulling the subscriber list from your database and sending via a bulk email endpoint with rate-limit backoff. Segment lists first to keep delivery reputation healthy.",
+    "tags": ["email", "mailchimp", "cron"]
+  },
+  {
+    "id": "email-inbox-routing",
+    "category": "customer_communication",
+    "title": "Keyword-based shared inbox routing",
+    "instructions": "Use Gmail/Outlook API push notifications or IMAP polling; run incoming subject/body through a keyword classifier (simple regex rules or a small text classifier) and forward/label via the mail API based on the matched department.",
+    "tags": ["gmail-api", "imap", "routing", "python"]
+  },
+  {
+    "id": "scheduling-recurring-invite",
+    "category": "scheduling",
+    "title": "Auto-create recurring calendar events",
+    "instructions": "Use Google Calendar API / Microsoft Graph API to create a recurring event with an RRULE (e.g. weekly on Monday). Attach the attendee list programmatically and let the calendar provider handle reminder notifications natively.",
+    "tags": ["google-calendar", "graph-api", "rrule"]
+  },
+  {
+    "id": "scheduling-room-booking",
+    "category": "scheduling",
+    "title": "Automatic meeting room booking",
+    "instructions": "Listen for calendar event creation via a webhook/push channel, then call the room-resource booking API (Google Calendar resource rooms, or Robin/Teem) to reserve the nearest available room matching attendee count.",
+    "tags": ["calendar", "webhook", "resource-booking"]
+  },
+  {
+    "id": "scheduling-reminder",
+    "category": "scheduling",
+    "title": "Pre-meeting reminder notifications",
+    "instructions": "Use the calendar provider's native reminder settings, or a scheduled job that queries events starting in the next 24h and sends a Slack/email reminder via API to each attendee.",
+    "tags": ["calendar", "slack-api", "cron"]
+  },
+  {
+    "id": "invoicing-auto-generate",
+    "category": "invoicing",
+    "title": "Auto-generate invoices on project completion",
+    "instructions": "On a 'project completed' status change event, call your invoicing API/library (Stripe Invoicing, QuickBooks API) with line items pulled from the project's billed hours/expenses table, then email the generated PDF to the client contact.",
+    "tags": ["stripe", "quickbooks", "webhook", "api"]
+  },
+  {
+    "id": "invoicing-reconciliation",
+    "category": "invoicing",
+    "title": "Daily bank transaction reconciliation",
+    "instructions": "Pull transactions via the Plaid API (or bank CSV export), match against open invoices/ledger entries by amount+date+reference using fuzzy matching (`thefuzz` library), and auto-mark exact matches as reconciled while flagging ambiguous ones for review.",
+    "tags": ["plaid", "reconciliation", "python", "fuzzy-matching"]
+  },
+  {
+    "id": "invoicing-payroll-calc",
+    "category": "invoicing",
+    "title": "Automated payroll calculation from timesheets",
+    "instructions": "Pull hours from the timesheet system's API, apply pay rate rules in a small rules engine (dict of rate tiers + overtime multiplier), and push computed totals to the payroll provider's API (Gusto, ADP) for review before disbursement.",
+    "tags": ["payroll", "api", "rules-engine"]
+  },
+  {
+    "id": "reporting-weekly-sales",
+    "category": "reporting",
+    "title": "Automated weekly sales report generation",
+    "instructions": "Schedule a script (cron/Airflow) that runs a SQL query against the sales table, loads results into pandas, formats into an Excel template with `openpyxl`, and emails/Slacks the report automatically every Monday morning.",
+    "tags": ["sql", "pandas", "openpyxl", "cron"]
+  },
+  {
+    "id": "reporting-analytics-pull",
+    "category": "reporting",
+    "title": "Daily analytics snapshot into tracking sheet",
+    "instructions": "Use the Google Analytics Data API (or Mixpanel/Amplitude API) to pull daily metrics, append to a Google Sheet via the Sheets API or a database table, and chart automatically with a connected dashboard (Looker Studio, Metabase).",
+    "tags": ["google-analytics", "sheets-api", "cron"]
+  },
+  {
+    "id": "reporting-dedup-check",
+    "category": "reporting",
+    "title": "Nightly duplicate-record detection",
+    "instructions": "Run a scheduled SQL job using `GROUP BY` on likely-duplicate key fields (email, phone) with `HAVING COUNT(*) > 1`, or use a fuzzy-matching library for near-duplicates, and write flagged rows to a review queue table.",
+    "tags": ["sql", "cron", "data-quality"]
+  },
+  {
+    "id": "reporting-uptime-check",
+    "category": "reporting",
+    "title": "Hourly service uptime monitoring",
+    "instructions": "Use a monitoring tool (UptimeRobot, Pingdom, or a simple `requests`-based cron script) to hit a health-check endpoint hourly, log status/latency to a table or time-series DB (InfluxDB), and alert via Slack webhook on failure.",
+    "tags": ["monitoring", "cron", "requests", "slack-webhook"]
+  },
+  {
+    "id": "approvals-transaction-rules",
+    "category": "approvals",
+    "title": "Rule-based transaction approval/flagging",
+    "instructions": "Encode approval rules as a decision table (amount thresholds, velocity checks, blocklist match) evaluated in a small rules engine; auto-approve when all rules pass, auto-flag to a human review queue otherwise. Log every rule outcome for auditability.",
+    "tags": ["rules-engine", "fraud-detection", "python"]
+  },
+  {
+    "id": "approvals-resume-screen",
+    "category": "approvals",
+    "title": "Keyword-based resume pre-screening",
+    "instructions": "Parse resumes with `pdfplumber`/`python-docx`, check for required keywords/years-of-experience patterns via regex or a small NLP model, and pass a shortlist plus a match-score to the hiring manager's dashboard.",
+    "tags": ["nlp", "resume-parsing", "python"]
+  },
+  {
+    "id": "approvals-ticket-triage",
+    "category": "approvals",
+    "title": "Automated support ticket triage",
+    "instructions": "Use a rules engine or a lightweight text classifier (scikit-learn on ticket text + customer tier metadata) to assign priority labels automatically in your helpdesk API (Zendesk, Freshdesk), routing based on the resulting tier.",
+    "tags": ["zendesk-api", "scikit-learn", "classification"]
+  },
+  {
+    "id": "approvals-auto-tag",
+    "category": "approvals",
+    "title": "Keyword-based ticket auto-tagging",
+    "instructions": "On new ticket webhook, run subject/body through a keyword-to-tag mapping (or a trained multi-label classifier), then call the helpdesk API's tagging endpoint to apply matched tags automatically.",
+    "tags": ["webhook", "helpdesk-api", "classification"]
+  },
+  {
+    "id": "approvals-archive-old",
+    "category": "approvals",
+    "title": "Auto-archive stale tickets/records",
+    "instructions": "Schedule a job that queries records where `status = 'closed' AND updated_at < now() - interval '90 days'`, then calls the archive/soft-delete endpoint of the source system in a batch.",
+    "tags": ["cron", "sql", "helpdesk-api"]
+  },
+  {
+    "id": "sales-social-cross-post",
+    "category": "sales_marketing",
+    "title": "Cross-platform social media posting",
+    "instructions": "Use Buffer/Hootsuite's API, or individual platform APIs (Twitter API v2, Meta Graph API, LinkedIn API), to publish the same scheduled post across all platforms from a single content calendar entry via a scheduled job.",
+    "tags": ["social-api", "buffer", "cron"]
+  },
+  {
+    "id": "it-ops-nightly-backup",
+    "category": "it_ops",
+    "title": "Automated nightly database backups",
+    "instructions": "Schedule `pg_dump`/`mysqldump` via cron or a managed backup service, upload the artifact to S3/GCS with lifecycle rules for retention, and send a Slack webhook notification on success/failure.",
+    "tags": ["postgres", "backup", "cron", "s3"]
+  },
+  {
+    "id": "it-ops-job-retry",
+    "category": "it_ops",
+    "title": "Auto-retry failed background jobs",
+    "instructions": "Use your job queue's built-in retry policy (Celery `retry`, Sidekiq retry, BullMQ backoff) with exponential backoff, and page/Slack-alert only after N consecutive failures to avoid alert fatigue.",
+    "tags": ["celery", "job-queue", "monitoring"]
+  },
+  {
+    "id": "it-ops-credential-rotation",
+    "category": "it_ops",
+    "title": "Scheduled API credential rotation",
+    "instructions": "Use a secrets manager (AWS Secrets Manager, HashiCorp Vault) with built-in rotation Lambdas/scripts on a cron schedule; update dependent services via their config-reload API rather than restarting them.",
+    "tags": ["secrets-manager", "vault", "cron"]
+  }
+]

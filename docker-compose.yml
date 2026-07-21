@@ -1,0 +1,70 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: bizoptimize
+      POSTGRES_USER: bizoptimize
+      POSTGRES_PASSWORD: bizoptimize
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bizoptimize -d bizoptimize"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ml-service:
+    build: ./ml-service
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-flash-lite-latest}
+      PORT: 5001
+    ports:
+      - "5001:5001"
+    volumes:
+      - chroma_data:/app/chroma_db
+      - chroma_data_langchain:/app/chroma_db_langchain
+
+  backend:
+    build: ./backend
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: bizoptimize
+      DB_USER: bizoptimize
+      DB_PASSWORD: bizoptimize
+      JWT_SECRET: ${JWT_SECRET:-dev-only-secret-change-me-before-any-real-deployment-0123456789}
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  gateway:
+    build: ./gateway
+    environment:
+      ML_SERVICE_URL: http://ml-service:5001
+      BACKEND_URL: http://backend:8080
+      PORT: 5000
+    ports:
+      - "5000:5000"
+    depends_on:
+      - ml-service
+      - backend
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_GATEWAY_URL: http://localhost:5000
+    ports:
+      - "3000:80"
+    depends_on:
+      - gateway
+
+volumes:
+  pgdata:
+  chroma_data:
+  chroma_data_langchain:
