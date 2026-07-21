@@ -22,4 +22,4 @@ ENV PORT=5001
 ENV PYTHONPATH=/app
 EXPOSE 5001
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5001", "--workers", "2", "--timeout", "120", "app.main:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5001", "--workers", "1", "--timeout", "120", "app.main:app"]

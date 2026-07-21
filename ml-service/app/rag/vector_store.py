@@ -15,10 +15,6 @@ _CORPUS_PATH = os.path.join(
 _PERSIST_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "chroma_db")
 _COLLECTION_NAME = "automation_scripts"
 
-_embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
-    model_name="all-MiniLM-L6-v2"
-)
-
 _client = None
 _collection = None
 
@@ -29,14 +25,22 @@ def _load_corpus() -> list:
 
 
 def _get_collection():
+    """Lazily builds the Chroma collection, including the sentence-transformers
+    embedding model. Deferred (not module-level) so a cold worker process
+    doesn't load the model into memory until something actually needs it --
+    keeps idle RAM down under Render's free-tier 512MB limit."""
     global _client, _collection
     if _collection is not None:
         return _collection
 
+    embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
+        model_name="all-MiniLM-L6-v2"
+    )
+
     os.makedirs(_PERSIST_DIR, exist_ok=True)
     _client = chromadb.PersistentClient(path=_PERSIST_DIR)
     _collection = _client.get_or_create_collection(
-        name=_COLLECTION_NAME, embedding_function=_embedding_fn
+        name=_COLLECTION_NAME, embedding_function=embedding_fn
     )
 
     # Populate once; corpus.json is small and static, so an ID-count check
