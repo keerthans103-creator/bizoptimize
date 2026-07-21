@@ -12,6 +12,10 @@ chain.
 _(free-tier hosting — the backend/gateway/ML service spin down after ~15 min idle and
 take up to 50s to wake on the first request)_
 
+![BizOptimize AI highlights reel](docs/hype-reel.gif)
+
+**See it in action** (real app footage, not staged):
+
 ![Demo](docs/demo.gif)
 
 ## Highlights
