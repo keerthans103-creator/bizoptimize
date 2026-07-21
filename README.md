@@ -12,11 +12,10 @@ chain.
 _(free-tier hosting — the backend/gateway/ML service spin down after ~15 min idle and
 take up to 50s to wake on the first request)_
 
-![BizOptimize AI highlights reel](docs/hype-reel.gif)
+![BizOptimize AI trailer](docs/trailer.gif)
 
-**See it in action** (real app footage, not staged):
-
-![Demo](docs/demo.gif)
+_A mix of real app footage and title cards — no audio. Full-quality [MP4 version](docs/trailer.mp4)
+and a longer [feature-by-feature walkthrough](docs/feature-tour.mp4) are also in `docs/`._
 
 ## Highlights
 
