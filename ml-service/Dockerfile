@@ -11,12 +11,11 @@ RUN python -m spacy download en_core_web_sm
 
 COPY . .
 
-# Bake the Random Forest and pre-populate the Chroma vector store at build
-# time so the container starts ready to serve, instead of doing this work
-# (and downloading the embedding model) on the first incoming request.
+# Bake the Random Forest at build time (no API key needed). The Chroma
+# vector stores are no longer warmed here -- they're embedded via Gemini's
+# API now instead of a local model, and GEMINI_API_KEY isn't available at
+# build time, so that population happens lazily on first request instead.
 RUN python models/train_model.py
-RUN python -c "from app.rag.vector_store import retrieve_automation; retrieve_automation('warm up the index')"
-RUN python -c "from app.rag.code_chain import warm_up; warm_up()"
 
 ENV PORT=5001
 ENV PYTHONPATH=/app

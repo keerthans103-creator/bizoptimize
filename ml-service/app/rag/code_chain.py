@@ -18,8 +18,7 @@ from langchain_chroma import Chroma
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda, RunnableParallel
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 
 from app.retry import call_with_retry
 
@@ -27,7 +26,8 @@ _CORPUS_PATH = os.path.join(
     os.path.dirname(__file__), "..", "..", "data", "automation_corpus", "corpus.json"
 )
 _PERSIST_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "chroma_db_langchain")
-_COLLECTION_NAME = "automation_scripts_langchain"
+_COLLECTION_NAME = "automation_scripts_langchain_gemini"
+_EMBEDDING_MODEL = "models/gemini-embedding-001"
 
 _PROMPT = ChatPromptTemplate.from_template(
     """You are a senior automation engineer. A user wants to automate the following task:
@@ -57,13 +57,16 @@ def _load_corpus() -> list:
 
 def _get_retriever():
     """Builds (or returns the cached) LangChain retriever over the automation
-    corpus. Needs no API key -- safe to call at Docker build time to warm the
-    embedding model and pre-populate the vector store."""
+    corpus. Uses Gemini's embeddings API (not a local model), so this now
+    needs GEMINI_API_KEY -- only safe to call at request time, not Docker
+    build time."""
     global _retriever
     if _retriever is not None:
         return _retriever
 
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    embeddings = GoogleGenerativeAIEmbeddings(
+        model=_EMBEDDING_MODEL, google_api_key=os.environ.get("GEMINI_API_KEY")
+    )
 
     os.makedirs(_PERSIST_DIR, exist_ok=True)
     vectorstore = Chroma(
@@ -86,12 +89,6 @@ def _get_retriever():
 
     _retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
     return _retriever
-
-
-def warm_up():
-    """Populates the vector store without touching the LLM client (which
-    requires GEMINI_API_KEY). Called at Docker build time."""
-    _get_retriever()
 
 
 def _format_docs(docs) -> str:
