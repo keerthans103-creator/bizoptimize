@@ -144,3 +144,11 @@ export function LayersIcon(props) {
     </Icon>
   );
 }
+
+export function CodeIcon(props) {
+  return (
+    <Icon {...props}>
+      <path d="m9 8-4 4 4 4M15 8l4 4-4 4" />
+    </Icon>
+  );
+}

@@ -72,7 +72,7 @@ export default function TaskFeed({ tasks, decisions, onDecide, onRestartDecision
           {candidates.length === 0 ? "0 / 0" : `${Math.min(index + 1, candidates.length)} / ${candidates.length}`}
         </span>
         <button className="icon-button feed-exit" onClick={onExit} aria-label="Exit feed">
-          <XIcon size={16} />
+          <XIcon size={22} />
         </button>
       </div>
 

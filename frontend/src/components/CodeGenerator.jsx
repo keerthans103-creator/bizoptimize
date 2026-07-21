@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api } from "../api/client.js";
+import { CodeIcon } from "./icons.jsx";
 
 export default function CodeGenerator({ taskText }) {
   const [state, setState] = useState("idle"); // idle | loading | done | error
@@ -21,7 +22,7 @@ export default function CodeGenerator({ taskText }) {
 
   if (state === "loading") {
     return (
-      <button className="btn-secondary generate-code-btn" disabled>
+      <button className="generate-code-btn" disabled>
         <span className="spinner" /> Generating&hellip;
       </button>
     );
@@ -31,8 +32,8 @@ export default function CodeGenerator({ taskText }) {
     return (
       <div className="generate-code-error">
         <p className="error small">{error}</p>
-        <button className="btn-secondary generate-code-btn" onClick={handleGenerate}>
-          Try again
+        <button className="generate-code-btn" onClick={handleGenerate}>
+          <CodeIcon size={15} /> Try again
         </button>
       </div>
     );
@@ -55,8 +56,8 @@ export default function CodeGenerator({ taskText }) {
   }
 
   return (
-    <button className="btn-secondary generate-code-btn" onClick={handleGenerate}>
-      Generate code
+    <button className="generate-code-btn" onClick={handleGenerate}>
+      <CodeIcon size={15} /> Generate code
     </button>
   );
 }
