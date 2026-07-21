@@ -4,11 +4,40 @@ Paste a plain-text description of a business workflow. BizOptimize AI splits it 
 discrete tasks, scores each task's automatability (0-100) with a Random Forest
 classifier trained on linguistic/structural features, retrieves relevant automation
 scripts for anything scoring 70+ via RAG over a vector DB, lets you swipe through
-those candidates to build a personal automation plan, and can generate a tailored
-code snippet for anything you pick using a LangChain retrieval-augmented-generation
+those candidates Tinder-style to build a personal automation plan, and can generate a
+tailored code snippet for anything you pick using a LangChain retrieval-augmented-generation
 chain.
 
-**Live demo:** _add link here once deployed (see Deployment below)_
+**Live demo:** https://bizoptimize-frontend.onrender.com
+_(free-tier hosting — the backend/gateway/ML service spin down after ~15 min idle and
+take up to 50s to wake on the first request)_
+
+![Demo](docs/demo.gif)
+
+## Highlights
+
+- **Full-stack polyglot system, deployed live**: React, Flask, Spring Boot (Java 17),
+  and Python across 4 independently-deployable services plus a managed Postgres
+  instance, all on Render's free tier via a single Infrastructure-as-Code blueprint
+  (`render.yaml`).
+- **Defensible ML methodology, not "ask an LLM to score it"**: automatability scoring
+  comes from a `RandomForestRegressor` trained on a hand-labeled seed dataset, with
+  every prediction explained via the model's actual feature importances — the LLM
+  (Gemini) is only ever used for parsing free text into tasks, never for scoring.
+- **Two deliberately distinct RAG implementations**: a raw `chromadb` query for
+  score-time retrieval, and a separate LangChain LCEL chain
+  (`retriever | prompt | llm | parser`) for on-demand code generation — chosen
+  per-feature based on whether the problem is actually retrieval-augmented
+  *generation*, not framework-for-framework's-sake.
+- **Diagnosed and fixed a real production incident**: the ML service OOM-crashed on
+  Render's 512MB free tier after initial deploy; root-caused it to a local
+  PyTorch/sentence-transformers embedding model, and migrated both retrieval paths to
+  Gemini's hosted embeddings API to remove the dependency entirely.
+- **Tested across every service**: 17 ml-service tests (retry/backoff, scoring,
+  RAG, feature extraction), 10 gateway tests, backend integration tests (Spring
+  `@SpringBootTest` + `MockMvc` + H2), and frontend unit tests (Vitest + Testing
+  Library, including a swipe-deck bug caught and fixed via the test suite) — plus a
+  4-job GitHub Actions CI pipeline running all of it.
 
 ## Architecture
 
@@ -22,15 +51,17 @@ Flask (gateway) --------> Spring Boot / Java (core backend)
 Python ML service              Postgres (users, workflows, tasks)
 (NLP feature extraction,
  Random Forest scoring,
- embeddings, Chroma RAG)
+ Gemini embeddings, Chroma RAG)
 ```
 
-- **`/frontend`** -- React (Vite) dashboard: workflow input, ranked task list,
-  savings summary, per-task automation instructions, saved workflow history.
+- **`/frontend`** -- React (Vite) dashboard: workflow input, a Tinder-style swipe deck
+  for deciding what to automate, a savings summary, per-task automation instructions
+  with on-demand code generation, and saved workflow history with persisted decisions.
 - **`/gateway`** -- Flask. The single entry point for the frontend. Routes to the
   ML service or the Java backend, and orchestrates calls that need both.
 - **`/backend`** -- Spring Boot. Auth (JWT), Postgres persistence for
-  users/workflows/tasks, and the savings/ROI calculation.
+  users/workflows/tasks (including which ones were swiped to automate vs. skip), and
+  the savings/ROI calculation.
 - **`/ml-service`** -- Python/Flask. Gemini-based workflow parsing, spaCy feature
   extraction, a scikit-learn Random Forest for scoring, a Chroma vector store for RAG
   retrieval of automation scripts, and a separate LangChain chain for generating a
@@ -60,8 +91,9 @@ docker compose up --build
 - Backend: http://localhost:8080
 - Postgres: localhost:5432
 
-First build trains the Random Forest and pre-populates the Chroma vector store,
-so the first `docker compose up --build` takes a few minutes.
+The first `/analyze` request after a fresh start populates the Chroma vector stores
+via Gemini's embeddings API (~27 corpus entries) -- a few seconds one-time cost, since
+embedding needs the API key and can't happen at Docker build time.
 
 ## Scoring methodology
 
@@ -104,8 +136,11 @@ app itself (once there's enough of it) is the natural next step, not yet done he
 
 - **Vector DB:** Chroma, running embedded (`ml-service/app/rag/vector_store.py`) -- no
   separate server to deploy or manage.
-- **Embeddings:** `sentence-transformers/all-MiniLM-L6-v2`, run locally -- no per-call API
-  cost, and it never leaves the container.
+- **Embeddings:** Gemini's hosted embeddings API (`models/gemini-embedding-001`), called
+  through the same `google-genai` SDK used for workflow parsing. Originally used a local
+  `sentence-transformers` model, but that pulls in PyTorch and pushed the ML service's
+  container past Render's free-tier 512MB memory limit in production -- see the
+  [Highlights](#highlights) section above for how that got diagnosed and fixed.
 - **Corpus:** `ml-service/data/automation_corpus/corpus.json` -- 27 hand-written automation
   script/instruction entries covering the same business-function categories as the seed
   dataset, each tagged with a category and relevant tool/library tags.
@@ -135,8 +170,8 @@ chain = (
 ```
 
 - **Retriever:** a separate LangChain-managed `Chroma` vector store (`langchain-chroma`),
-  populated from the same automation corpus, embedded with `langchain-huggingface`'s
-  wrapper around `all-MiniLM-L6-v2`.
+  populated from the same automation corpus, embedded with `langchain-google-genai`'s
+  `GoogleGenerativeAIEmbeddings` wrapper around Gemini's embeddings API.
 - **Generation:** `langchain-google-genai`'s `ChatGoogleGenerativeAI`, pointed at the same
   Gemini model used elsewhere.
 - **Why a separate module from `vector_store.py`:** the existing scoring-time retrieval
@@ -144,6 +179,14 @@ chain = (
   including the simple single-call paths (workflow parsing, score-time retrieval), would
   add framework overhead with no real benefit there -- it's used specifically where the
   retrieve-then-generate pattern actually applies.
+
+## Persisted swipe decisions
+
+Automate/skip decisions made in the Feed aren't just session-local UI state -- they're
+saved to Postgres per task (`automation_decision` column) and restored when a saved
+workflow is reopened from History. Re-entering the Feed for an already-decided workflow
+skips straight to the summary instead of asking you to re-swipe tasks you've already
+made a call on.
 
 ## Savings / ROI calculation
 
@@ -161,31 +204,43 @@ labeled as an *estimate* in the UI.
 ## Testing
 
 ```bash
-# ML service
+# ML service (17 tests: scoring, feature extraction, RAG, retry/backoff)
 cd ml-service && pip install -r requirements.txt && python models/train_model.py && pytest
 
-# Backend
+# Gateway (10 tests: proxying, error handling, orchestration)
+cd gateway && pip install -r requirements.txt && pytest
+
+# Backend (Spring Boot integration tests via H2 in-memory DB)
 cd backend && ./mvnw test    # or `mvn test` if you have Maven installed locally
+
+# Frontend (Vitest + React Testing Library)
+cd frontend && npm install && npx vitest run
 ```
 
-## Deployment plan
+All four run automatically on every push via `.github/workflows/ci.yml`.
 
-- **Frontend** → Vercel.
-- **Gateway + ML service** → combined and deployed to Render's free tier. This is the
-  live demo's "hero" piece -- it's what actually runs the NLP/RF scoring/RAG live.
-- **Spring Boot + Postgres** → fully functional and documented here, runnable via
-  `docker compose up`, but not necessarily kept live 24/7 given free-tier hosting costs.
-  Clone the repo and run it locally to see the full persistence/auth layer in action.
+## Deployment
 
-Each service has its own Dockerfile and reads its config from environment variables, so
-any piece can be deployed independently without refactoring.
+Deployed on [Render](https://render.com) as a single Blueprint (`render.yaml`) --
+one `git push` provisions everything:
+
+- **Frontend** -- static site (Vite build, no server needed).
+- **Gateway + Backend + ML service** -- Docker web services, each built from its own
+  Dockerfile.
+- **Postgres** -- Render's managed free-tier database.
+
+Each service reads its config from environment variables and has its own Dockerfile, so
+any piece can also be deployed independently, or run entirely locally via
+`docker compose up`.
 
 ## Environment variables
 
 See `.env.example`. At minimum you need `GEMINI_API_KEY` (your own free key from
-https://aistudio.google.com/apikey) for the workflow-parsing step. Never commit a real key.
+https://aistudio.google.com/apikey) for workflow parsing, scoring-time retrieval, and
+code generation. Never commit a real key.
 
 ## Tech stack
 
 React · Flask · Spring Boot (Java 17) · Postgres · scikit-learn · spaCy · Chroma ·
-sentence-transformers · LangChain · Gemini API (Google) · Docker Compose
+LangChain · Gemini API (Google, chat + embeddings) · Docker Compose · Render ·
+GitHub Actions
