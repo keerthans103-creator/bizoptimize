@@ -28,7 +28,22 @@ def _mock_response(json_data, status_code=200):
 
 
 def test_health(client):
-    resp = client.get("/health")
+    with patch.object(gateway_module.requests, "get") as mock_get:
+        resp = client.get("/health")
+
+    assert resp.status_code == 200
+    assert resp.get_json() == {"status": "ok", "gateway": "up"}
+    # /health also pings ml-service and backend to wake them on Render's free
+    # tier -- confirm it fires both, not just its own status check.
+    assert mock_get.call_count == 2
+    pinged_urls = {call.args[0] for call in mock_get.call_args_list}
+    assert pinged_urls == {f"{gateway_module.ML_SERVICE_URL}/health", f"{gateway_module.BACKEND_URL}/api/health"}
+
+
+def test_health_ignores_upstream_ping_failures(client):
+    with patch.object(gateway_module.requests, "get", side_effect=real_requests.exceptions.ConnectionError()):
+        resp = client.get("/health")
+
     assert resp.status_code == 200
     assert resp.get_json() == {"status": "ok", "gateway": "up"}
 

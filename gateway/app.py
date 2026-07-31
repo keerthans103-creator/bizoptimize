@@ -49,6 +49,15 @@ def _proxy(method, base_url, path, **kwargs):
 
 @app.get("/health")
 def health():
+    # On Render's free tier the ml-service and backend spin down after idle
+    # periods and take 30-60s to cold-start. Hitting /health also pings both
+    # of them (short timeout, failures ignored) so the frontend can fire this
+    # on page load and have them already warm by the time a user hits Analyze.
+    for base_url, path in ((ML_SERVICE_URL, "/health"), (BACKEND_URL, "/api/health")):
+        try:
+            requests.get(f"{base_url}{path}", timeout=3)
+        except requests.exceptions.RequestException:
+            pass
     return jsonify({"status": "ok", "gateway": "up"})
 
 

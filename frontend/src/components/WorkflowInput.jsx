@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ArrowRightIcon } from "./icons.jsx";
 
-export default function WorkflowInput({ onAnalyze, loading }) {
+export default function WorkflowInput({ onAnalyze, loading, wakeMessage }) {
   const [text, setText] = useState(
     "Every morning I check the shared inbox and reply to shipping status questions using our template. " +
       "Each Monday I send a reminder email to any customer whose invoice is more than 7 days overdue. " +
@@ -33,6 +33,7 @@ export default function WorkflowInput({ onAnalyze, loading }) {
           </>
         )}
       </button>
+      {loading && wakeMessage && <p className="muted small wake-message">{wakeMessage}</p>}
     </section>
   );
 }
