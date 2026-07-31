@@ -1,0 +1,22 @@
+name: Keep Render services warm
+
+# Render's free tier spins the ml-service/backend/gateway down after ~15min
+# idle, and a cold start can take 30s-2min (measured up to ~113s for the
+# Spring Boot backend). Pinging every 10 minutes -- comfortably under that
+# idle threshold -- keeps them warm so a real visitor never eats a cold
+# start. Hitting the gateway's /health is enough: it in turn pings both
+# ml-service and backend (see gateway/app.py), waking all three.
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping gateway (wakes ml-service + backend too)
+        run: curl -sS -m 120 https://bizoptimize-gateway.onrender.com/health
+      - name: Ping frontend
+        run: curl -sS -m 30 -o /dev/null https://bizoptimize-frontend.onrender.com/
