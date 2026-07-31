@@ -14,8 +14,8 @@ take up to 50s to wake on the first request)_
 
 ![BizOptimize AI trailer](docs/trailer.gif)
 
-_A mix of real app footage and title cards — no audio. Full-quality [MP4 version](docs/trailer.mp4)
-and a longer [feature-by-feature walkthrough](docs/feature-tour.mp4) are also in `docs/`._
+_Real app footage with a title card intro — no audio. Full-quality [MP4 version](docs/trailer.mp4)
+and the [same walkthrough without the title card](docs/feature-tour.mp4) are also in `docs/`._
 
 ## Highlights
 
