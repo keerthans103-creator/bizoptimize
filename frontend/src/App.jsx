@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "./api/client.js";
 import HistoryPage from "./components/HistoryPage.jsx";
 import SavingsSummary from "./components/SavingsSummary.jsx";
@@ -68,10 +68,18 @@ export default function App() {
   const [savingsByTask, setSavingsByTask] = useState({});
   const [decisionsByTaskText, setDecisionsByTaskText] = useState({});
   const [loading, setLoading] = useState(false);
+  const [wakeMessage, setWakeMessage] = useState("");
   const [error, setError] = useState("");
   const [workflowId, setWorkflowId] = useState(null);
   const [title, setTitle] = useState("");
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
+
+  // Render's free tier spins the backend down when idle; ping it the moment
+  // the page loads so it's likely already warm by the time someone reads the
+  // page and hits Analyze, rather than only starting to wake up on that click.
+  useEffect(() => {
+    api.wakeUp();
+  }, []);
 
   const resetAnalysis = () => {
     setRawText("");
@@ -92,9 +100,12 @@ export default function App() {
   const handleAnalyze = async (text) => {
     setLoading(true);
     setError("");
+    setWakeMessage("");
     setWorkflowId(null);
     try {
-      const { tasks: mlTasks } = await api.analyzeWorkflow(text);
+      const { tasks: mlTasks } = await api.analyzeWorkflow(text, () =>
+        setWakeMessage("Waking up the demo service — this can take up to a minute on first load...")
+      );
       setRawText(text);
       setTasks(mlTasks.map(toInternalTask));
       setTitle(text.slice(0, 60));
@@ -105,6 +116,7 @@ export default function App() {
       setError(err.message);
     } finally {
       setLoading(false);
+      setWakeMessage("");
     }
   };
 
@@ -202,7 +214,9 @@ export default function App() {
               />
             )}
 
-            {view === "analyze" && <WorkflowInput onAnalyze={handleAnalyze} loading={loading} />}
+            {view === "analyze" && (
+              <WorkflowInput onAnalyze={handleAnalyze} loading={loading} wakeMessage={wakeMessage} />
+            )}
 
             {view === "summary" &&
               (tasks.length === 0 ? (
