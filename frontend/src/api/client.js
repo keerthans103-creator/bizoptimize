@@ -2,11 +2,11 @@ const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || "http://localhost:5000";
 
 // Render's free tier spins the ml-service/backend down after idle periods;
 // the first request after that gets a 502/504 (or a non-JSON body forwarded
-// from a still-booting upstream) while it cold-starts, which can take 30-60s.
-// Retrying with backoff turns that into a slow-but-successful first request
-// instead of a dead-end error for whoever hits the app first.
+// from a still-booting upstream) while it cold-starts. Measured cold starts
+// against the actual deployed service ran 48-60s, so this budget (~95s) adds
+// real margin above the observed worst case rather than cutting it close.
 const COLD_START_STATUSES = new Set([502, 503, 504]);
-const COLD_START_RETRY_DELAYS_MS = [3000, 6000, 10000, 15000, 15000];
+const COLD_START_RETRY_DELAYS_MS = [3000, 5000, 8000, 12000, 15000, 20000, 20000, 12000];
 
 function isColdStartError(status, data) {
   return COLD_START_STATUSES.has(status) || /non-JSON response/i.test(data?.error || "");
