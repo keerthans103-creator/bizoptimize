@@ -1,36 +1,51 @@
 :root {
-  --bg: #0b0c10;
-  --bg-subtle: #1c1e25;
-  --surface: #15161b;
-  --border: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.16);
+  --bg: #faf7f2;
+  --bg-subtle: #f1ebe0;
+  --surface: #ffffff;
+  --border: #e4ddd0;
+  --border-strong: #d3c9b6;
 
-  --text-primary: #f2f3f6;
-  --text-secondary: #9799a8;
-  --text-tertiary: #666875;
+  --text-primary: #22271f;
+  --text-secondary: #5b5a52;
+  --text-tertiary: #8a8778;
 
-  --accent: #746ff2;
-  --accent-hover: #8b86f5;
-  --accent-active: #5f5adf;
-  --accent-ring: rgba(116, 111, 242, 0.25);
-  --accent-bg: rgba(116, 111, 242, 0.14);
+  --accent: #1b4332;
+  --accent-hover: #2d6a4f;
+  --accent-active: #143728;
+  --accent-ring: rgba(27, 67, 50, 0.22);
+  --accent-bg: rgba(27, 67, 50, 0.1);
 
-  --success: #3ddc97;
-  --success-bg: rgba(61, 220, 151, 0.14);
-  --warning: #f5b84c;
-  --warning-bg: rgba(245, 184, 76, 0.14);
-  --danger: #f77272;
-  --danger-bg: rgba(247, 114, 114, 0.14);
+  --success: #1b4332;
+  --success-bg: rgba(27, 67, 50, 0.1);
+  --warning: #a66a00;
+  --warning-bg: rgba(166, 106, 0, 0.12);
+  --danger: #b85c38;
+  --danger-bg: rgba(184, 92, 56, 0.12);
 
-  --r-sm: 8px;
-  --r-md: 10px;
+  --r-sm: 5px;
+  --r-md: 6px;
   --r-full: 999px;
 
+  --serif: "Fraunces", Georgia, "Times New Roman", serif;
   --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, "Liberation Mono", monospace;
   --ease: cubic-bezier(0.2, 0, 0, 1);
 
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  color-scheme: dark;
+  font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
+}
+
+h1,
+h2,
+h3,
+.feed-task-text,
+.feed-summary-title,
+.task-text,
+.sidebar-brand h1,
+.panel h2,
+.automation-entry-header strong {
+  font-family: var(--serif);
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 * {
@@ -79,7 +94,7 @@ body {
 .brand-mark {
   width: 26px;
   height: 26px;
-  border-radius: 7px;
+  border-radius: var(--r-md);
   background: var(--accent);
   display: flex;
   align-items: center;
@@ -205,7 +220,7 @@ body {
 .panel {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--r-md);
   padding: 22px;
 }
 
@@ -875,7 +890,7 @@ button:disabled {
   max-width: 460px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: var(--r-md);
   padding: 36px 28px;
   display: flex;
   flex-direction: column;
@@ -895,6 +910,7 @@ button:disabled {
 
 .swipe-card:not(.swipe-card-behind) {
   z-index: 1;
+  box-shadow: 0 12px 32px -12px rgba(27, 67, 50, 0.22);
 }
 
 .swipe-stamp {
@@ -953,12 +969,12 @@ button:disabled {
 .swipe-btn-automate {
   background: var(--success);
   border: 1px solid var(--success);
-  color: #06110c;
+  color: #fff;
 }
 
 .swipe-btn-automate:hover {
-  background: #34e0a1;
-  border-color: #34e0a1;
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 /* ---------- Feed summary / automation plan ---------- */
@@ -987,7 +1003,7 @@ button:disabled {
 .feed-plan-item {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   padding: 18px;
   text-align: left;
 }
