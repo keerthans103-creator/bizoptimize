@@ -9,9 +9,6 @@ the cost of a per-embedding network call (fine at this corpus size/traffic).
 import json
 import os
 
-import chromadb
-from google import genai
-
 from app.retry import call_with_retry
 
 _CORPUS_PATH = os.path.join(
@@ -29,6 +26,8 @@ class _GeminiEmbeddingFunction:
     """chromadb-compatible embedding function backed by Gemini's embeddings API."""
 
     def __init__(self):
+        from google import genai
+
         api_key = os.environ.get("GEMINI_API_KEY")
         if not api_key:
             raise RuntimeError(
@@ -54,10 +53,14 @@ def _load_corpus() -> list:
 def _get_collection():
     """Lazily builds the Chroma collection, including the Gemini-backed
     embedding function. Deferred (not module-level) so a cold worker process
-    doesn't call out to the embeddings API until something actually needs it."""
+    doesn't call out to the embeddings API until something actually needs it,
+    and so gunicorn doesn't have to wait on importing chromadb (a heavy
+    dependency) before it can answer /health."""
     global _client, _collection
     if _collection is not None:
         return _collection
+
+    import chromadb
 
     os.makedirs(_PERSIST_DIR, exist_ok=True)
     _client = chromadb.PersistentClient(path=_PERSIST_DIR)

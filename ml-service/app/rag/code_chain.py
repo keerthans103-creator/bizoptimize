@@ -14,12 +14,6 @@ rather than hand-rolled, on purpose.
 import json
 import os
 
-from langchain_chroma import Chroma
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnableLambda, RunnableParallel
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
-
 from app.retry import call_with_retry
 
 _CORPUS_PATH = os.path.join(
@@ -29,8 +23,7 @@ _PERSIST_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "chroma_db_la
 _COLLECTION_NAME = "automation_scripts_langchain_gemini"
 _EMBEDDING_MODEL = "models/gemini-embedding-001"
 
-_PROMPT = ChatPromptTemplate.from_template(
-    """You are a senior automation engineer. A user wants to automate the following task:
+_PROMPT_TEMPLATE = """You are a senior automation engineer. A user wants to automate the following task:
 
 Task: {task}
 
@@ -44,7 +37,6 @@ Adapt the tools/libraries/approach from the reference pattern(s) to this specifi
 repeat the reference verbatim. Respond with ONLY the code snippet in a fenced code block, no prose
 before or after it.
 """
-)
 
 _retriever = None
 _chain = None
@@ -59,10 +51,15 @@ def _get_retriever():
     """Builds (or returns the cached) LangChain retriever over the automation
     corpus. Uses Gemini's embeddings API (not a local model), so this now
     needs GEMINI_API_KEY -- only safe to call at request time, not Docker
-    build time."""
+    build time. LangChain imports are deferred to here too: they're heavy
+    and otherwise block gunicorn from being ready to answer /health on a
+    cold worker."""
     global _retriever
     if _retriever is not None:
         return _retriever
+
+    from langchain_chroma import Chroma
+    from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
     embeddings = GoogleGenerativeAIEmbeddings(
         model=_EMBEDDING_MODEL, google_api_key=os.environ.get("GEMINI_API_KEY")
@@ -105,6 +102,11 @@ def _get_chain():
     if _chain is not None:
         return _chain
 
+    from langchain_core.output_parsers import StrOutputParser
+    from langchain_core.prompts import ChatPromptTemplate
+    from langchain_core.runnables import RunnableLambda, RunnableParallel
+    from langchain_google_genai import ChatGoogleGenerativeAI
+
     retriever = _get_retriever()
     llm = ChatGoogleGenerativeAI(
         model=os.environ.get("GEMINI_MODEL", "gemini-flash-lite-latest"),
@@ -117,7 +119,7 @@ def _get_chain():
             context=retriever | RunnableLambda(_format_docs),
             task=RunnableLambda(lambda x: x),
         )
-        | _PROMPT
+        | ChatPromptTemplate.from_template(_PROMPT_TEMPLATE)
         | llm
         | StrOutputParser()
     )

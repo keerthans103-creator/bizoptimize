@@ -26,7 +26,7 @@ def test_parse_workflow_retries_transient_error_then_succeeds(monkeypatch):
     fake_client = MagicMock()
     fake_client.models.generate_content.side_effect = fake_generate_content
 
-    with patch("app.nlp.workflow_parser.genai.Client", return_value=fake_client):
+    with patch("google.genai.Client", return_value=fake_client):
         with patch("app.retry.time.sleep"):
             tasks = workflow_parser.parse_workflow("Send an email every day.")
 

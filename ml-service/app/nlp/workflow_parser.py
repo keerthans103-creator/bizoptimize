@@ -10,9 +10,6 @@ explainable via feature importances instead of an opaque LLM judgment call.
 import json
 import os
 
-from google import genai
-from google.genai import types
-
 from app.retry import call_with_retry
 
 DEFAULT_MODEL = os.environ.get("GEMINI_MODEL", "gemini-flash-lite-latest")
@@ -34,7 +31,13 @@ class WorkflowParserError(RuntimeError):
     pass
 
 
-def _client() -> genai.Client:
+def _client():
+    # Imported here, not at module level: `google-genai` is a heavy import
+    # (and unnecessary weight on gunicorn's boot path, which every /health
+    # check has to wait behind on a cold worker) that's only actually needed
+    # once a real /analyze or /parse request comes in.
+    from google import genai
+
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         raise WorkflowParserError(
@@ -46,6 +49,8 @@ def _client() -> genai.Client:
 
 def parse_workflow(workflow_text: str) -> list:
     """Return a list of {"text": str, "hint": str} dicts for one workflow."""
+    from google.genai import types
+
     client = _client()
     response = call_with_retry(
         client.models.generate_content,

@@ -10,8 +10,6 @@ box score.
 import re
 from functools import lru_cache
 
-import spacy
-
 _NLP = None
 
 # Keyword banks are lemma-based (spaCy lemmatizes before matching) so
@@ -46,8 +44,14 @@ FREQUENCY_PATTERN = re.compile(
 
 
 def _get_nlp():
+    # spaCy imported here, not at module level -- it's a heavy import that
+    # would otherwise block gunicorn from being ready to answer /health on a
+    # cold worker, for a dependency that's only needed once a real task
+    # description actually needs feature extraction.
     global _NLP
     if _NLP is None:
+        import spacy
+
         try:
             _NLP = spacy.load("en_core_web_sm")
         except OSError:

@@ -2,13 +2,29 @@ server:
   port: 8080
 
 spring:
+  main:
+    # Defers non-essential bean creation until first use instead of eagerly
+    # building the whole context at boot -- meaningful on Render's free tier
+    # where cold starts were measured up to ~113s.
+    lazy-initialization: true
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:bizoptimize}
     username: ${DB_USER:bizoptimize}
     password: ${DB_PASSWORD:bizoptimize}
+    hikari:
+      # Defaults open up to 10 connections at startup; the schema/table count
+      # here doesn't need that, and each connection is a network round trip
+      # to Postgres during boot.
+      maximum-pool-size: 3
+      minimum-idle: 1
   jpa:
     hibernate:
-      ddl-auto: update
+      # Schema is stable and already applied -- "update" makes Hibernate
+      # introspect and diff every table against the entities on every boot,
+      # which is a real cost over the network to a remote Postgres instance.
+      # If the schema needs to change, switch this back to "update" for one
+      # deploy, then revert.
+      ddl-auto: none
     properties:
       hibernate:
         format_sql: true
