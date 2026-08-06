@@ -146,3 +146,49 @@ def test_full_save_stops_if_analyze_fails(client):
 
     assert resp.status_code == 502
     assert mock_post.call_count == 1
+
+
+def test_agent_execute_proxies_to_ml_service(client):
+    with patch.object(gateway_module.requests, "request") as mock_request:
+        mock_request.return_value = _mock_response({"job_id": "abc123"}, status_code=202)
+        resp = client.post("/api/agent/execute", json={"task_text": "reply to shipping questions"})
+
+    assert resp.status_code == 202
+    assert resp.get_json() == {"job_id": "abc123"}
+    args, kwargs = mock_request.call_args
+    assert args[0] == "POST"
+    assert args[1] == f"{gateway_module.ML_SERVICE_URL}/agent/execute"
+    assert kwargs["json"] == {"task_text": "reply to shipping questions"}
+
+
+def test_agent_job_status_proxies_to_ml_service(client):
+    with patch.object(gateway_module.requests, "request") as mock_request:
+        mock_request.return_value = _mock_response({"job_id": "abc123", "status": "completed"})
+        resp = client.get("/api/agent/jobs/abc123")
+
+    assert resp.status_code == 200
+    args, _ = mock_request.call_args
+    assert args[0] == "GET"
+    assert args[1] == f"{gateway_module.ML_SERVICE_URL}/agent/jobs/abc123"
+
+
+def test_agent_job_approve_proxies_to_ml_service(client):
+    with patch.object(gateway_module.requests, "request") as mock_request:
+        mock_request.return_value = _mock_response({"status": "approved"})
+        resp = client.post("/api/agent/jobs/abc123/approve")
+
+    assert resp.status_code == 200
+    args, _ = mock_request.call_args
+    assert args[0] == "POST"
+    assert args[1] == f"{gateway_module.ML_SERVICE_URL}/agent/jobs/abc123/approve"
+
+
+def test_agent_job_reject_proxies_to_ml_service(client):
+    with patch.object(gateway_module.requests, "request") as mock_request:
+        mock_request.return_value = _mock_response({"status": "rejected"})
+        resp = client.post("/api/agent/jobs/abc123/reject")
+
+    assert resp.status_code == 200
+    args, _ = mock_request.call_args
+    assert args[0] == "POST"
+    assert args[1] == f"{gateway_module.ML_SERVICE_URL}/agent/jobs/abc123/reject"
