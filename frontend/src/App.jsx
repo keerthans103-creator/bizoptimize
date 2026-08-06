@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "./api/client.js";
+import AgentDemo from "./components/AgentDemo.jsx";
 import HistoryPage from "./components/HistoryPage.jsx";
 import SavingsSummary from "./components/SavingsSummary.jsx";
 import Sidebar from "./components/Sidebar.jsx";
@@ -12,6 +13,7 @@ const TOPBAR_TITLES = {
   feed: "Feed",
   summary: "Summary",
   history: "Saved workflows",
+  agent: "Agentic execution layer",
 };
 
 function toInternalTask(mlTask) {
@@ -189,7 +191,7 @@ export default function App() {
       <div className="main">
         <div className="topbar">
           <h2>{TOPBAR_TITLES[view]}</h2>
-          {tasks.length > 0 && view !== "history" && (
+          {tasks.length > 0 && view !== "history" && view !== "agent" && (
             <button className="btn-secondary" onClick={resetAnalysis}>
               Start over
             </button>
@@ -213,6 +215,8 @@ export default function App() {
                 refreshKey={historyRefreshKey}
               />
             )}
+
+            {view === "agent" && <AgentDemo />}
 
             {view === "analyze" && (
               <WorkflowInput onAnalyze={handleAnalyze} loading={loading} wakeMessage={wakeMessage} />
