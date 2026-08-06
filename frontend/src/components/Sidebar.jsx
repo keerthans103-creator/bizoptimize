@@ -36,6 +36,12 @@ export default function Sidebar({ view, onNavigate, email, onAuthChange }) {
         >
           History
         </button>
+        <button
+          className={`nav-item ${view === "agent" ? "active" : ""}`}
+          onClick={() => onNavigate("agent")}
+        >
+          Agent
+        </button>
       </nav>
 
       <div className="sidebar-footer">

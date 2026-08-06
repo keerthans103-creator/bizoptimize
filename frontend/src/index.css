@@ -1056,3 +1056,100 @@ button:disabled {
   line-height: 1.5;
   color: var(--text-primary);
 }
+
+/* ---------- Agent execution demo ---------- */
+
+.agent-panel {
+  max-width: 640px;
+}
+
+.agent-job {
+  margin-top: 18px;
+}
+
+.agent-job-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.agent-status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--r-full);
+  font-weight: 600;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.agent-status-pill.small {
+  padding: 2px 8px;
+  font-size: 0.68rem;
+}
+
+.agent-status-success {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.agent-status-warning {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.agent-status-danger {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.agent-status-neutral {
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+}
+
+.agent-step-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.agent-step {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 12px 14px;
+}
+
+.agent-step-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.agent-step-message {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.agent-step-description {
+  margin: 0 0 4px;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.agent-approval-gate {
+  margin-top: 14px;
+  padding: 14px;
+  background: var(--warning-bg);
+  border: 1px solid rgba(166, 106, 0, 0.25);
+  border-radius: var(--r-sm);
+}
+
+.agent-approval-gate p {
+  margin: 0 0 10px;
+}
