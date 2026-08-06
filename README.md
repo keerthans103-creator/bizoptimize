@@ -211,13 +211,13 @@ labeled as an *estimate* in the UI.
 # ML service (17 tests: scoring, feature extraction, RAG, retry/backoff)
 cd ml-service && pip install -r requirements.txt && python models/train_model.py && pytest
 
-# Gateway (10 tests: proxying, error handling, orchestration)
+# Gateway (11 tests: proxying, error handling, orchestration)
 cd gateway && pip install -r requirements.txt && pytest
 
-# Backend (Spring Boot integration tests via H2 in-memory DB)
+# Backend (6 tests: Spring Boot integration tests via H2 in-memory DB)
 cd backend && ./mvnw test    # or `mvn test` if you have Maven installed locally
 
-# Frontend (Vitest + React Testing Library)
+# Frontend (14 tests: Vitest + React Testing Library)
 cd frontend && npm install && npx vitest run
 ```
 
