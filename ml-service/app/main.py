@@ -10,7 +10,6 @@ import os
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-from app.agent import orchestrator
 from app.nlp.workflow_parser import WorkflowParserError, parse_workflow
 from app.nlp.feature_extractor import extract_features
 from app.rag.code_chain import generate_code
@@ -138,46 +137,6 @@ def analyze():
 
     analyzed.sort(key=lambda t: t["score"], reverse=True)
     return jsonify({"tasks": analyzed, "threshold": AUTOMATABILITY_THRESHOLD})
-
-
-# ---- Agentic execution layer (v2) ------------------------------------------
-# See ml-service/app/agent/orchestrator.py for the job state machine. This
-# is deliberately async/job-based, not a blocking request: /agent/execute
-# returns a job_id immediately, and the frontend polls /agent/jobs/<id> for
-# live progress instead of holding one request open for the whole run.
-
-
-@app.post("/agent/execute")
-def agent_execute():
-    body = request.get_json(force=True) or {}
-    task_text = (body.get("task_text") or "").strip()
-    if not task_text:
-        return jsonify({"error": "task_text is required"}), 400
-
-    job_id = orchestrator.create_job(task_text)
-    return jsonify({"job_id": job_id}), 202
-
-
-@app.get("/agent/jobs/<job_id>")
-def agent_job_status(job_id):
-    job = orchestrator.get_job(job_id)
-    if job is None:
-        return jsonify({"error": "job not found"}), 404
-    return jsonify(job)
-
-
-@app.post("/agent/jobs/<job_id>/approve")
-def agent_job_approve(job_id):
-    if not orchestrator.approve_job(job_id):
-        return jsonify({"error": "job not found or not awaiting approval"}), 404
-    return jsonify({"status": "approved"})
-
-
-@app.post("/agent/jobs/<job_id>/reject")
-def agent_job_reject(job_id):
-    if not orchestrator.reject_job(job_id):
-        return jsonify({"error": "job not found or not awaiting approval"}), 404
-    return jsonify({"status": "rejected"})
 
 
 if __name__ == "__main__":
