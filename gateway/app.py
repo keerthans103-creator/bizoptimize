@@ -140,29 +140,6 @@ def update_task_savings(task_id):
     )
 
 
-# ---- Agentic execution layer (v2) ------------------------------------------
-
-@app.post("/api/agent/execute")
-def agent_execute():
-    body = request.get_json(force=True) or {}
-    return _proxy("POST", ML_SERVICE_URL, "/agent/execute", json=body)
-
-
-@app.get("/api/agent/jobs/<job_id>")
-def agent_job_status(job_id):
-    return _proxy("GET", ML_SERVICE_URL, f"/agent/jobs/{job_id}")
-
-
-@app.post("/api/agent/jobs/<job_id>/approve")
-def agent_job_approve(job_id):
-    return _proxy("POST", ML_SERVICE_URL, f"/agent/jobs/{job_id}/approve")
-
-
-@app.post("/api/agent/jobs/<job_id>/reject")
-def agent_job_reject(job_id):
-    return _proxy("POST", ML_SERVICE_URL, f"/agent/jobs/{job_id}/reject")
-
-
 # ---- Orchestrated route: analyze + save in a single round trip ------------
 
 @app.post("/api/workflows/full-save")

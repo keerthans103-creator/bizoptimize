@@ -83,16 +83,4 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ task_text: taskText }),
     }),
-
-  executeAgentTask: (taskText) =>
-    request("/api/agent/execute", {
-      method: "POST",
-      body: JSON.stringify({ task_text: taskText }),
-    }),
-
-  getAgentJob: (jobId) => request(`/api/agent/jobs/${jobId}`),
-
-  approveAgentJob: (jobId) => request(`/api/agent/jobs/${jobId}/approve`, { method: "POST" }),
-
-  rejectAgentJob: (jobId) => request(`/api/agent/jobs/${jobId}/reject`, { method: "POST" }),
 };
