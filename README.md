@@ -6,11 +6,14 @@ classifier trained on linguistic/structural features, retrieves relevant automat
 scripts for anything scoring 70+ via RAG over a vector DB, lets you swipe through
 those candidates Tinder-style to build a personal automation plan, and can generate a
 tailored code snippet for anything you pick using a LangChain retrieval-augmented-generation
-chain.
+chain. For a scored task, a planner/executor/verifier agent loop can also execute it
+directly against a sandboxed environment instead of leaving the code snippet for a
+human to run -- see [Agentic execution layer](#agentic-execution-layer).
 
-**Live demo:** https://bizoptimize-frontend.onrender.com
-_(free-tier hosting — the backend/gateway/ML service spin down after ~15 min idle and
-take up to 50s to wake on the first request)_
+**Run it yourself in one command:** `docker compose up --build` — see
+[Running locally](#running-locally). No hosted demo is kept up; this is a student
+project and free-tier hosting for a 5-service stack isn't reliable enough to point
+recruiters at, so local is the intended way to actually see it work.
 
 ![BizOptimize AI trailer](docs/trailer.gif)
 
@@ -20,10 +23,9 @@ the stack it's built on) — no audio. Full-quality [MP4 version](docs/trailer.m
 
 ## Highlights
 
-- **Full-stack polyglot system, deployed live**: React, Flask, Spring Boot (Java 17),
-  and Python across 4 independently-deployable services plus a managed Postgres
-  instance, all on Render's free tier via a single Infrastructure-as-Code blueprint
-  (`render.yaml`).
+- **Full-stack polyglot system**: React, Flask, Spring Boot (Java 17), and Python
+  across 4 independently-deployable services plus Postgres, orchestrated with a
+  single `docker compose up --build`.
 - **Defensible ML methodology, not "ask an LLM to score it"**: automatability scoring
   comes from a `RandomForestRegressor` trained on a hand-labeled seed dataset, with
   every prediction explained via the model's actual feature importances — the LLM
@@ -33,15 +35,20 @@ the stack it's built on) — no audio. Full-quality [MP4 version](docs/trailer.m
   (`retriever | prompt | llm | parser`) for on-demand code generation — chosen
   per-feature based on whether the problem is actually retrieval-augmented
   *generation*, not framework-for-framework's-sake.
+- **Agentic execution layer**: a planner/executor/verifier loop
+  (`ml-service/app/agent/`) that actually executes a scored task's steps against a
+  sandboxed environment, not just scores/generates code for a human to run. See
+  [Agentic execution layer](#agentic-execution-layer) below for how replanning and
+  the approval gate actually behave.
 - **Diagnosed and fixed a real production incident**: the ML service OOM-crashed on
   Render's 512MB free tier after initial deploy; root-caused it to a local
   PyTorch/sentence-transformers embedding model, and migrated both retrieval paths to
   Gemini's hosted embeddings API to remove the dependency entirely.
-- **Tested across every service**: 17 ml-service tests (retry/backoff, scoring,
-  RAG, feature extraction), 10 gateway tests, backend integration tests (Spring
+- **Tested across every service**: 40 ml-service tests (agent orchestrator/sandbox/
+  routes, retry/backoff, scoring, RAG, feature extraction), 15 gateway tests
+  (including agent-route proxying), backend integration tests (Spring
   `@SpringBootTest` + `MockMvc` + H2), and frontend unit tests (Vitest + Testing
-  Library, including a swipe-deck bug caught and fixed via the test suite) — plus a
-  4-job GitHub Actions CI pipeline running all of it.
+  Library) — plus a GitHub Actions CI pipeline running all of it.
 
 ## Architecture
 
@@ -68,8 +75,9 @@ Python ML service              Postgres (users, workflows, tasks)
   the savings/ROI calculation.
 - **`/ml-service`** -- Python/Flask. Gemini-based workflow parsing, spaCy feature
   extraction, a scikit-learn Random Forest for scoring, a Chroma vector store for RAG
-  retrieval of automation scripts, and a separate LangChain chain for generating a
-  tailored code snippet per task on demand.
+  retrieval of automation scripts, a separate LangChain chain for generating a
+  tailored code snippet per task on demand, and an `app/agent/` planner/executor/
+  verifier layer that executes a scored task's steps against a sandbox.
 
 ## Why this split
 
@@ -184,6 +192,41 @@ chain = (
   add framework overhead with no real benefit there -- it's used specifically where the
   retrieve-then-generate pattern actually applies.
 
+## Agentic execution layer
+
+Scoring and code generation above still leave a human to actually run the automation.
+The agent layer (`ml-service/app/agent/`) goes one step further for a scored task: it
+actually executes the steps, against a sandboxed fake inbox (`sandbox.py`) that never
+touches a real external system, by design, not a limitation.
+
+- **`planner.py`** -- calls Gemini with a bounded tool set (`send_reply`,
+  `flag_for_review`) to break the task into concrete steps against the current sandbox
+  state.
+- **`executor.py`** -- runs each step against the sandbox and records the result.
+- **`verifier.py`** -- a second, independent Gemini call that checks whether the
+  executed step's result actually satisfies the *original message*, not just whether
+  the action ran without erroring. This is a semantic check, not a keyword match.
+- **`orchestrator.py`** -- the job state machine tying the above together: async,
+  job-based (`/agent/execute`, `/agent/jobs/<id>`, in-memory job store, no new
+  infrastructure), with two behaviors that matter more than the happy path:
+  - **Replan on verification failure, not blind retry.** If the verifier rejects a
+    step, the planner is called again with the failure reason and picks a genuinely
+    different action -- it doesn't just resend the same reply hoping it lands.
+  - **Human-approval gate for risky steps.** Anything that sends real output (like
+    `send_reply`) pauses the job at `awaiting_approval` until a human calls
+    `/agent/jobs/<id>/approve` or `/reject`.
+
+**A real run, unscripted** (task: *"Reply to unread customer emails about shipping
+delays"*): the planner produced five steps, one per unread sandbox message. Four were
+genuine shipping questions and passed verification with a tailored reply and tracking
+number. The fifth, from a customer whose actual message was about a damaged item and a
+refund, got a shipping-template reply that failed verification (*"completely ignores
+the customer's complaint... instead providing a generic shipping update"*) -- the
+orchestrator replanned it, and the second attempt correctly switched the action to
+`flag_for_review` for human handling instead of retrying `send_reply`. That's the
+replan-on-failure and semantic-verification behavior actually working, not a
+cherry-picked demo.
+
 ## Persisted swipe decisions
 
 Automate/skip decisions made in the Feed aren't just session-local UI state -- they're
@@ -208,10 +251,11 @@ labeled as an *estimate* in the UI.
 ## Testing
 
 ```bash
-# ML service (17 tests: scoring, feature extraction, RAG, retry/backoff)
+# ML service (40 tests: agent orchestrator/sandbox/routes, scoring, feature
+# extraction, RAG, retry/backoff)
 cd ml-service && pip install -r requirements.txt && python models/train_model.py && pytest
 
-# Gateway (11 tests: proxying, error handling, orchestration)
+# Gateway (15 tests: proxying incl. agent routes, error handling, orchestration)
 cd gateway && pip install -r requirements.txt && pytest
 
 # Backend (6 tests: Spring Boot integration tests via H2 in-memory DB)
@@ -225,17 +269,17 @@ All four run automatically on every push via `.github/workflows/ci.yml`.
 
 ## Deployment
 
-Deployed on [Render](https://render.com) as a single Blueprint (`render.yaml`) --
-one `git push` provisions everything:
+**The intended way to run this is locally** via `docker compose up --build` (see
+[Running locally](#running-locally)) -- every service reads its config from
+environment variables and has its own Dockerfile, so nothing here is
+local-only or a demo shortcut.
 
-- **Frontend** -- static site (Vite build, no server needed).
-- **Gateway + Backend + ML service** -- Docker web services, each built from its own
-  Dockerfile.
-- **Postgres** -- Render's managed free-tier database.
-
-Each service reads its config from environment variables and has its own Dockerfile, so
-any piece can also be deployed independently, or run entirely locally via
-`docker compose up`.
+A [Render](https://render.com) Blueprint (`render.yaml`) also exists for cloud
+deployment (frontend as a static site, gateway/backend/ML service as Docker web
+services, a managed Postgres instance), provisioned from one `git push`. It isn't kept
+running continuously -- free-tier hosting for a 5-service stack isn't reliable enough
+to be worth pointing anyone at -- but the blueprint itself is real, working
+infrastructure-as-code if you want to deploy it yourself.
 
 ## Environment variables
 
