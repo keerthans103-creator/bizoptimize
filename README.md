@@ -261,7 +261,7 @@ cd gateway && pip install -r requirements.txt && pytest
 # Backend (6 tests: Spring Boot integration tests via H2 in-memory DB)
 cd backend && ./mvnw test    # or `mvn test` if you have Maven installed locally
 
-# Frontend (14 tests: Vitest + React Testing Library)
+# Frontend (18 tests incl. AgentDemo: Vitest + React Testing Library)
 cd frontend && npm install && npx vitest run
 ```
 
